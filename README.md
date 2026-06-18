@@ -1,21 +1,44 @@
-# GlobalBridge AI — Tam Çok Dilli Köprü
+# GlobalBridge AI — Kurumsal Çeviri Köprüsü
 
-100+ dil destekleyen gerçek zamanlı çeviri, altyazı ve PDF çeviri sistemi.  
-Palabra, Maestra, Talo, Wordly, Otter ve Doclingo özelliklerini birleştirir.
+100+ dil destekleyen çeviri, konuşma, canlı altyazı, Keet toplantı köprüsü ve belge çeviri sistemi.  
+Veriler cihazda kalır — QVAC lokal AI + FastAPI backend + Next.js UI v2.
 
-## Özellikler
+## Depolar
 
-| Modül | Özellikler |
-|-------|-----------|
-| **Live Caption** | Zoom/Meet/Teams/Discord, Whisper STT, ≤2sn gecikme, çift yönlü çeviri, overlay |
-| **PDF Çeviri** | Layout koruma, OCR, bilingual önizleme, batch |
-| **Toplantı Zekası** | Özet, aksiyon maddeleri, konu tespiti, speaker ayrımı |
-| **Glossary** | Şirket/teknik terim sözlüğü |
-| **Gizlilik** | QVAC local AI, Sovereign mode, zero egress, otomatik veri silme |
+| Repo | Açıklama |
+|------|----------|
+| [Globalbridgeai](https://github.com/001453/Globalbridgeai) | Ana geliştirme deposu |
+| [newtranslate](https://github.com/001453/newtranslate) | Temiz, tek parça kopya (aynı `main` dalı) |
+
+```bash
+git clone https://github.com/001453/newtranslate.git
+cd newtranslate
+```
+
+## Özellikler (UI v2)
+
+| Modül | Route | Açıklama |
+|-------|-------|----------|
+| **Çeviri** | `/` | Yazı + mikrofon dikte, otomatik çeviri, geçmiş |
+| **Konuşma** | `/conversation` | İki yönlü konuşma modu |
+| **Keet Toplantı** | `/meeting` | P2P Keet odası, kişisel ana dil altyazısı |
+| **Canlı Altyazı** | `/live` | Zoom/Meet/Teams sekmesi veya mikrofon yakalama |
+| **Belge** | `/document` | Metin/dosya çevirisi |
+| **PDF** | `/pdf` | PDF/DOCX çeviri, layout koruma |
+| **Sözlük** | `/glossary` | Şirket/teknik terim sözlüğü |
+| **Geçmiş** | `/history` | Oturum geçmişi |
+
+**Arayüz:** Sol sidebar (masaüstü) + alt sekmeler (mobil), footer'da **UI v2** etiketi.
+
+### Keet + kişisel altyazı
+
+- Kullanıcı **Benim ana dilim** ve **Karşı taraf dili** seçer.
+- Her katılımcı altyazıyı kendi ana dilinde görür (ör. İngilizce konuşan EN, Türkçe konuşan TR).
+- Backend `viewer_lang` ile çeviri hedefini kişiselleştirir.
 
 ## QVAC — Veriler Cihazda Kalır
 
-[QVAC](https://qvac.tether.io/) (Tether) tamamen **lokal, merkeziyetsiz AI** sağlar. GlobalBridge AI ile entegre edildi:
+[QVAC](https://qvac.tether.io/) (Tether) tamamen **lokal, merkeziyetsiz AI** sağlar:
 
 | Bileşen | Sovereign Mode | Cloud Mode |
 |---------|----------------|------------|
@@ -27,12 +50,66 @@ Palabra, Maestra, Talo, Wordly, Otter ve Doclingo özelliklerini birleştirir.
 **Sovereign Mode** (`LOCAL_PROCESSING_ONLY=true`): Hiçbir konuşma, transkript veya dosya buluta gitmez.
 
 ```
-Mikrofon → localhost:8000 (FastAPI) → localhost:8765 (QVAC Bridge) → GPU/RAM
-                                              ↑
-                                    Veri burada kalır, dışarı çıkmaz
+Mikrofon / Sekme Sesi
+    → WebSocket /api/v1/ws/live
+    → Faster-Whisper STT
+    → QVAC çeviri (localhost:8765)
+    → Altyazı overlay + transkript
 ```
 
-QVAC bridge başlatma:
+## Klasör Yapısı
+
+```
+globalbridge-ai/
+├── backend/                    # FastAPI
+│   ├── main.py
+│   ├── api/
+│   │   ├── websocket.py        # Canlı STT + çeviri pipeline
+│   │   ├── translate.py
+│   │   └── pdf.py
+│   └── services/
+│       ├── stt.py
+│       ├── translation.py
+│       ├── overlay.py          # viewer_lang, altyazı state
+│       ├── qvac_client.py
+│       └── pdf_translate.py
+├── frontend/                   # Next.js 15 — UI v2
+│   └── src/
+│       ├── app/                # /, /conversation, /meeting, /live, …
+│       ├── components/
+│       │   ├── layout/AppShell.tsx
+│       │   ├── TranslatorPanel.tsx
+│       │   ├── KeetMeetingBridge.tsx
+│       │   ├── ConversationMode.tsx
+│       │   └── DocumentTranslator.tsx
+│       ├── hooks/              # useSpeechDictation, useLanguagePacks, …
+│       └── lib/                # api.ts, keet.ts, languages.ts
+├── qvac-service/               # @qvac/sdk local AI bridge
+├── electron/                   # Floating overlay (opsiyonel)
+├── docs/
+│   └── AGENT-STATUS.md         # Geliştirici durum notu
+└── docker-compose.yml
+```
+
+## Kurulum
+
+### Gereksinimler
+
+- Python 3.12+
+- Node.js 20+
+- (Önerilen) NVIDIA GPU + CUDA
+- [QVAC SDK](https://qvac.tether.io/)
+- Together AI API key (sadece cloud mod)
+
+### 1. Ortam değişkenleri
+
+```bash
+cp .env.example .env
+# Sovereign mode: TOGETHER_API_KEY boş, LOCAL_PROCESSING_ONLY=true
+```
+
+### 2. QVAC bridge
+
 ```bash
 cd qvac-service
 npm install
@@ -40,78 +117,7 @@ npm start
 # http://127.0.0.1:8765/health
 ```
 
-Dokümantasyon: [docs.qvac.tether.io](https://docs.qvac.tether.io/sdk/getting-started/)
-
-## Klasör Yapısı
-
-```
-globalbridge-ai/
-├── backend/
-│   ├── main.py                 # FastAPI entry
-│   ├── config.py               # Ayarlar
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   ├── api/
-│   │   ├── websocket.py        # Gerçek zamanlı pipeline
-│   │   ├── pdf.py              # PDF REST API
-│   │   └── translate.py        # Glossary + summary
-│   ├── services/
-│   │   ├── stt.py              # Faster-Whisper
-│   │   ├── translation.py      # QVAC local + Together AI routing
-│   │   ├── qvac_client.py      # QVAC bridge client
-│   │   ├── privacy.py          # Sovereign / hybrid / cloud
-│   │   ├── overlay.py          # Altyazı state
-│   │   ├── pdf_translate.py    # PDF/DOCX çeviri
-│   │   ├── glossary.py
-│   │   └── summary.py
-│   ├── prompts/
-│   │   ├── translation_system.py  # ⭐ Kritik system prompt'lar
-│   │   └── summary_system.py
-│   └── database/
-├── frontend/                   # Next.js 15
-│   └── src/
-│       ├── components/
-│       │   ├── LiveCaption.tsx
-│       │   ├── SubtitleOverlay.tsx
-│       │   └── pdf/PdfUploader.tsx
-│       └── hooks/
-├── qvac-service/               # @qvac/sdk local AI bridge
-│   └── server.js
-├── electron/                   # Floating overlay
-│   ├── main.js
-│   ├── overlay.html
-│   └── preload.js
-├── docker-compose.yml
-└── .env.example
-```
-
-## Kurulum (Adım Adım)
-
-### 1. Gereksinimler
-
-- Python 3.12+
-- Node.js 20+
-- (Önerilen) NVIDIA GPU + CUDA — Whisper + QVAC için
-- QVAC SDK (lokal AI): https://qvac.tether.io/
-- Together AI API key (sadece cloud mod): https://api.together.xyz
-
-### 2. Ortam değişkenleri
-
-```bash
-cp .env.example .env
-# Sovereign mode için TOGETHER_API_KEY boş bırakın
-# LOCAL_PROCESSING_ONLY=true (varsayılan)
-```
-
-### 3. QVAC Local AI Bridge (önerilen — gizlilik)
-
-```bash
-cd qvac-service
-npm install
-npm start
-```
-
-### 4. Backend
+### 3. Backend
 
 ```bash
 cd backend
@@ -119,17 +125,11 @@ python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
-
-# macOS/Linux
-source .venv/bin/activate
-
 pip install -r requirements.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-İlk çalıştırmada Whisper `large-v3` modeli indirilir (~3GB).
-
-### 5. Frontend
+### 4. Frontend
 
 ```bash
 cd frontend
@@ -139,83 +139,68 @@ npm run dev
 
 Tarayıcı: http://localhost:3000
 
-### 6. Electron Overlay (toplantı üstü altyazı)
+### Hızlı başlatma (Windows, 3 terminal)
 
-```bash
-cd electron
-npm install
-npm start
+```powershell
+cd qvac-service; node server.js          # 8765
+cd backend; .\.venv\Scripts\uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+cd frontend; npm run dev                 # 3000
 ```
 
-Kısayollar:
-- `Ctrl+Shift+O` — overlay göster/gizle
-- `Ctrl+Shift+Up/Down` — font boyutu
-
-### 7. Docker (tüm stack)
+### Docker
 
 ```bash
-# Sovereign mode (QVAC + backend + frontend)
 docker compose --profile sovereign up --build
-```
-
-Production PostgreSQL için:
-```bash
-docker compose --profile production up --build
 ```
 
 ## Kullanım
 
-### Gerçek Zamanlı Altyazı
+### Çeviri (ana ekran)
 
-1. http://localhost:3000/live adresine gidin
-2. Dil A (ör. Türkçe) ve Dil B (ör. İngilizce) seçin
-3. **Oturumu Başlat** → mikrofon veya **Toplantı Sekmesi Sesi** (getDisplayMedia)
-4. Zoom/Meet/Teams sekmesini paylaşarak karşı tarafın sesini de yakalayın
-5. Altyazılar ekranın altında görünür; Electron overlay ile her uygulamanın üstünde kalır
+1. http://localhost:3000
+2. Kaynak/hedef dil seçin, yazın veya mikrofonla dikte edin
+3. Geçmiş: sidebar → **Geçmiş** veya `/history`
 
-### PDF Çeviri
+### Keet toplantı
+
+1. http://localhost:3000/meeting
+2. Ana dilinizi ve karşı taraf dilini ayarlayın
+3. Keet davet linkini açın, oturumu başlatın
+4. Altyazılar kendi ana dilinizde görünür
+
+### Canlı altyazı (Zoom/Meet)
+
+1. http://localhost:3000/live
+2. Dil seçin, **Oturumu Başlat**
+3. Mikrofon veya **Toplantı Sekmesi Sesi** (getDisplayMedia) ile yakalayın
+
+### PDF çeviri
 
 1. http://localhost:3000/pdf
-2. PDF/DOCX yükleyin, kaynak ve hedef dil seçin
-3. Bilingual önizleme veya çevrilmiş PDF indirin
+2. Dosya yükleyin, dilleri seçin, indirin
 
-### Glossary API
+## Sorun giderme
 
-```bash
-curl -X POST http://localhost:8000/api/v1/glossary \
-  -H "Content-Type: application/json" \
-  -d '{"source":"GlobalBridge","target":"GlobalBridge","source_lang":"en","target_lang":"tr"}'
+**Eski menü görünüyorsa** (üstte "Live Caption", landing kartları): yerel dosya geri dönüşü olabilir, GitHub'daki sürüm doğrudur.
+
+```powershell
+git checkout HEAD -- frontend/src
+Remove-Item -Recurse -Force frontend/.next, frontend/node_modules/.cache -ErrorAction SilentlyContinue
 ```
 
-## Pipeline Mimarisi
+Kalıcı çözüm: projeyi Temp klasörü dışına klonlayın (ör. `C:\Users\nihat\Projects\newtranslate`).
 
-```
-Mikrofon/Sekme Sesi
-    → WebSocket (binary PCM 16kHz)
-    → Faster-Whisper STT (dil algılama)
-    → Together AI Qwen/Llama (çeviri + glossary)
-    → Overlay Service (broadcast)
-    → Browser / Electron overlay
-```
+Detaylı not: [docs/AGENT-STATUS.md](docs/AGENT-STATUS.md)
 
-## System Prompt'lar
-
-Tüm çeviri kalitesi `backend/prompts/translation_system.py` dosyasında:
-
-- `build_live_caption_prompt()` — gerçek zamanlı altyazı
-- `build_document_prompt()` — PDF/doküman
-- `PAIR_EXAMPLES` — TR↔EN, ZH, AR, ES, DE, JA, KO, RU, FR örnekleri
-
-## Performans Hedefleri
+## Performans
 
 | Metrik | Hedef |
 |--------|-------|
-| STT gecikme | 300–800ms |
-| Çeviri gecikme | 500–1200ms |
+| STT gecikme | 300–800 ms |
+| Çeviri gecikme | 500–1200 ms |
 | Toplam | ≤ 1.5–2 sn |
-| Altyazı süresi | 3.5 sn |
 
-GPU yoksa: `WHISPER_MODEL=distil-large-v3` ve `WHISPER_DEVICE=cpu` kullanın.
+GPU yoksa: `WHISPER_MODEL=distil-large-v3`, `WHISPER_DEVICE=cpu`
 
 ## Lisans
 
