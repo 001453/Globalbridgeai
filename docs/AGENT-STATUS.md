@@ -4,7 +4,8 @@
 
 ## Push durumu: EVET
 
-- **Repo:** https://github.com/001453/Globalbridgeai
+- **Repo (ana):** https://github.com/001453/Globalbridgeai
+- **Repo (temiz kopya):** https://github.com/001453/newtranslate
 - **Branch:** `main` = `origin/main`
 - **Commit:** `a8002f9` — Keet toplantı köprüsü, kişisel ana dil altyazısı, P2P oda bağlantısı
 - **Önceki:** `50b7623` — Kurumsal UI v2 (sidebar, sade çeviri ana ekranı, alt sekmeler)
