@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlobalBridge Overlay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans SC', system-ui, sans-serif;
+      -webkit-app-region: drag;
+    }
+    #container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90vw;
+      text-align: center;
+      pointer-events: none;
+      -webkit-app-region: no-drag;
+    }
+    #caption {
+      display: none;
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      font-size: 32px;
+      font-weight: 600;
+      padding: 16px 24px;
+      border-radius: 8px;
+      line-height: 1.4;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+      animation: fadeIn 0.25s ease-out;
+    }
+    #caption.visible { display: block; }
+    #caption.rtl { direction: rtl; }
+    #speaker {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+      font-weight: 400;
+    }
+    #original {
+      font-size: 18px;
+      opacity: 0.6;
+      margin-top: 8px;
+      font-weight: 400;
+    }
+    #status {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      -webkit-app-region: no-drag;
+    }
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .dot.connected { background: #22c55e; }
+    .dot.disconnected { background: #ef4444; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .fade-out { animation: fadeOut 0.3s ease-in forwards; }
+  </style>
+</head>
+<body>
+  <div id="status"><span class="dot disconnected" id="dot"></span><span id="statusText">Connecting...</span></div>
+  <div id="container">
+    <div id="caption">
+      <div id="speaker"></div>
+      <div id="translated"></div>
+      <div id="original"></div>
+    </div>
+  </div>
+
+  <script>
+    const captionEl = document.getElementById('caption');
+    const translatedEl = document.getElementById('translated');
+    const originalEl = document.getElementById('original');
+    const speakerEl = document.getElementById('speaker');
+    const dot = document.getElementById('dot');
+    const statusText = document.getElementById('statusText');
+
+    let fontSize = 32;
+    let hideTimer = null;
+    let ws = null;
+
+    const RTL_LANGS = ['ar', 'he', 'fa', 'ur'];
+
+    function showCaption(data) {
+      clearTimeout(hideTimer);
+      captionEl.classList.remove('fade-out');
+      captionEl.classList.add('visible');
+
+      translatedEl.textContent = data.translated || '';
+      originalEl.textContent = data.original !== data.translated ? data.original : '';
+      originalEl.style.display = originalEl.textContent ? 'block' : 'none';
+      speakerEl.textContent = data.speaker || '';
+      speakerEl.style.display = data.speaker ? 'block' : 'none';
+
+      const rtl = RTL_LANGS.includes((data.target_lang || '').split('-')[0]);
+      captionEl.classList.toggle('rtl', rtl);
+
+      if (data.style) {
+        fontSize = data.style.fontSizePx || fontSize;
+        captionEl.style.fontSize = fontSize + 'px';
+        captionEl.style.backgroundColor = data.style.backgroundColor || captionEl.style.backgroundColor;
+      }
+
+      const displaySec = 3.5;
+      hideTimer = setTimeout(hideCaption, displaySec * 1000);
+    }
+
+    function hideCaption() {
+      captionEl.classList.add('fade-out');
+      setTimeout(() => {
+        captionEl.classList.remove('visible', 'fade-out');
+      }, 300);
+    }
+
+    function connect() {
+      const url = window.globalBridge
+        ? null
+        : (localStorage.getItem('gb_ws_url') || 'ws://localhost:8000/api/v1/ws/live');
+
+      const connectWs = (wsUrl) => {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          dot.className = 'dot connected';
+          statusText.textContent = 'Live';
+          ws.send(JSON.stringify({
+            action: 'start_session',
+            config: {
+              source_lang: 'auto',
+              target_lang: 'en',
+              bidirectional: true,
+              lang_a: 'tr',
+              lang_b: 'en',
+            },
+          }));
+        };
+
+        ws.onclose = () => {
+          dot.className = 'dot disconnected';
+          statusText.textContent = 'Reconnecting...';
+          setTimeout(connect, 3000);
+        };
+
+        ws.onmessage = (ev) => {
+          const msg = JSON.parse(ev.data);
+          if (msg.event === 'caption_show' || msg.event === 'caption_update') {
+            showCaption(msg.payload);
+          } else if (msg.event === 'caption_hide') {
+            hideCaption();
+          }
+        };
+      };
+
+      if (window.globalBridge) {
+        window.globalBridge.getWsUrl().then(connectWs);
+        window.globalBridge.onFontSizeChange((delta) => {
+          fontSize = Math.max(20, Math.min(48, fontSize + delta));
+          captionEl.style.fontSize = fontSize + 'px';
+        });
+      } else {
+        connectWs(url);
+      }
+    }
+
+    connect();
+  </script>
+</body>
+</html>

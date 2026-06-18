@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme="dark"] {
+  --gb-bg: #0b1018;
+  --gb-surface: #121a26;
+  --gb-surface-2: #1a2433;
+  --gb-border: #2a3648;
+  --gb-text: #eef3fa;
+  --gb-muted: #8fa0b8;
+  --gb-accent: #3b8eea;
+  --gb-accent-dim: #2d74c4;
+  --gb-success: #4ade80;
+  --gb-warning: #fbbf24;
+  --gb-danger: #f87171;
+  --gb-radius: 14px;
+  --gb-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  --gb-sidebar-w: 240px;
+}
+
+[data-theme="light"] {
+  --gb-bg: #f4f6f9;
+  --gb-surface: #ffffff;
+  --gb-surface-2: #eef2f7;
+  --gb-border: #d5dde8;
+  --gb-text: #1a2332;
+  --gb-muted: #5c6b82;
+  --gb-accent: #1d7ed8;
+  --gb-accent-dim: #1668b5;
+  --gb-success: #16a34a;
+  --gb-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+body {
+  background: var(--gb-bg);
+  color: var(--gb-text);
+  @apply antialiased;
+}
+
+@layer components {
+  .gb-app {
+    @apply mx-auto flex min-h-screen max-w-[1280px] flex-col lg:flex-row;
+  }
+
+  .gb-sidebar {
+    @apply flex shrink-0 flex-col border-b border-[var(--gb-border)] lg:w-[var(--gb-sidebar-w)] lg:border-b-0 lg:border-r;
+    background: var(--gb-surface);
+  }
+
+  .gb-sidebar-brand {
+    @apply border-b border-[var(--gb-border)] p-4;
+  }
+
+  .gb-sidebar-section {
+    @apply border-b border-[var(--gb-border)] p-3;
+  }
+
+  .gb-sidebar-label {
+    @apply mb-2 px-2 text-[0.65rem] font-bold uppercase tracking-widest;
+    color: var(--gb-muted);
+  }
+
+  .gb-menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition;
+    color: var(--gb-muted);
+  }
+
+  .gb-menu-item:hover {
+    color: var(--gb-accent);
+    background: rgba(59, 142, 234, 0.08);
+  }
+
+  .gb-menu-item.active {
+    color: var(--gb-accent);
+    background: rgba(59, 142, 234, 0.12);
+    font-weight: 600;
+  }
+
+  .gb-menu-item-live.active {
+    color: var(--gb-danger);
+    background: rgba(248, 113, 113, 0.1);
+  }
+
+  .gb-main {
+    @apply min-w-0 flex-1 p-4 lg:p-6;
+  }
+
+  .gb-badge {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide;
+    color: var(--gb-muted);
+    border-color: var(--gb-border);
+  }
+
+  .gb-badge-accent {
+    color: var(--gb-accent);
+    border-color: rgba(59, 142, 234, 0.35);
+    background: rgba(59, 142, 234, 0.08);
+  }
+
+  .gb-card {
+    background: var(--gb-surface);
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    box-shadow: var(--gb-shadow);
+  }
+
+  .gb-btn-primary {
+    @apply rounded-lg px-4 py-2 text-sm font-medium text-white;
+    background: var(--gb-accent);
+  }
+
+  .gb-btn-primary:hover:not(:disabled) {
+    background: var(--gb-accent-dim);
+  }
+
+  .gb-btn-ghost {
+    @apply rounded-lg px-2.5 py-1.5 text-sm;
+    color: var(--gb-accent);
+  }
+
+  .gb-input,
+  .gb-select,
+  .gb-textarea {
+    @apply w-full rounded-lg px-3 py-2 text-sm outline-none;
+    color: var(--gb-text);
+    background: var(--gb-surface-2);
+    border: 1px solid var(--gb-border);
+  }
+
+  .gb-panel-head {
+    @apply border-b px-4 py-2 text-[0.72rem] font-bold uppercase tracking-wider;
+    color: var(--gb-muted);
+    border-color: var(--gb-border);
+  }
+}

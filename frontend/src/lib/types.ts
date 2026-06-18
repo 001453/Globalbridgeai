@@ -1,0 +1,95 @@
+export interface CaptionStyle {
+  fontSizePx: number;
+  fontFamily: string;
+  textColor: string;
+  backgroundColor: string;
+  paddingPx: number;
+  borderRadiusPx: number;
+  maxWidthPercent: number;
+  position: "bottom" | "top" | "floating";
+  bottomOffsetPx: number;
+  textShadow: string;
+  rtl: boolean;
+}
+
+export interface CaptionLine {
+  id: string;
+  original: string;
+  translated: string;
+  source_lang: string;
+  target_lang: string;
+  speaker: string | null;
+  timestamp: number;
+  is_final: boolean;
+  confidence: number;
+  style?: CaptionStyle;
+}
+
+export interface LiveSessionConfig {
+  source_lang: string;
+  target_lang: string;
+  bidirectional: boolean;
+  lang_a: string;
+  lang_b: string;
+}
+
+export interface PipelineResult {
+  original: string;
+  translated: string;
+  source_lang: string;
+  target_lang: string;
+  stt_ms: number;
+  translation_ms: number;
+  total_ms: number;
+}
+
+export interface MeetingSummary {
+  title?: string;
+  summary?: string;
+  action_items?: Array<{
+    task: string;
+    assignee: string;
+    due_date: string | null;
+    priority: string;
+  }>;
+  topics?: Array<{ topic: string; summary: string; importance: string }>;
+  key_decisions?: string[];
+}
+
+export interface PdfJob {
+  job_id: string;
+  filename: string;
+  status: string;
+  progress?: number;
+  error?: string;
+}
+
+export const LANGUAGES = [
+  { code: "auto", name: "Auto-detect" },
+  { code: "en", name: "English" },
+  { code: "tr", name: "Türkçe" },
+  { code: "es", name: "Español" },
+  { code: "zh", name: "中文 (简体)" },
+  { code: "zh-TW", name: "中文 (繁體)" },
+  { code: "ar", name: "العربية" },
+  { code: "de", name: "Deutsch" },
+  { code: "fr", name: "Français" },
+  { code: "ja", name: "日本語" },
+  { code: "ko", name: "한국어" },
+  { code: "ru", name: "Русский" },
+  { code: "pt", name: "Português" },
+  { code: "it", name: "Italiano" },
+  { code: "hi", name: "हिन्दी" },
+  { code: "nl", name: "Nederlands" },
+  { code: "pl", name: "Polski" },
+  { code: "fa", name: "فارسی" },
+  { code: "he", name: "עברית" },
+  { code: "uk", name: "Українська" },
+] as const;
+
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+
+export const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL ||
+  API_BASE.replace(/^http/, "ws") + "/api/v1/ws/live";

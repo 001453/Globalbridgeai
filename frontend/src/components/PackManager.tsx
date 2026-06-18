@@ -1,0 +1,58 @@
+"use client";
+
+import { Download, RefreshCw, CheckCircle2 } from "lucide-react";
+import { langName } from "@/lib/languages";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  from: string;
+  to: string;
+  ready: boolean;
+  bundled: boolean;
+  modelLoaded: boolean;
+  qvacOnline: boolean;
+  downloading: boolean;
+  progress: number | null;
+  onDownload: () => void;
+  onRefresh: () => void;
+};
+
+export function PackManager(p: Props) {
+  if (p.bundled) {
+    return (
+      <div className="flex items-center gap-2 border-t border-[var(--gb-border)] bg-[var(--gb-surface-2)] px-4 py-3 text-sm text-[var(--gb-success)]">
+        <CheckCircle2 className="h-4 w-4" />
+        {langName(p.from)} ↔ {langName(p.to)} dahili kurulu
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--gb-border)] bg-[var(--gb-surface-2)] p-4">
+      <div>
+        <p className={cn("text-sm font-medium", p.ready ? "text-[var(--gb-success)]" : "text-[var(--gb-warning)]")}>
+          {p.ready ? "Etkinleştirildi" : `İsteğe bağlı: ${langName(p.from)} → ${langName(p.to)}`}
+        </p>
+        <p className="text-xs text-[var(--gb-muted)]">
+          {p.modelLoaded ? "Model yüklü — anında etkinleşir" : "İlk paket ~600 MB (tek sefer)"}
+        </p>
+        {p.downloading && p.progress != null && (
+          <div className="mt-2 h-1 w-48 rounded bg-[var(--gb-border)]">
+            <div className="h-full bg-[var(--gb-accent)]" style={{ width: `${p.progress}%` }} />
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <button type="button" className="gb-btn-ghost border border-[var(--gb-border)]" onClick={p.onRefresh}>
+          <RefreshCw className="mr-1 inline h-3 w-3" />
+          Yenile
+        </button>
+        {!p.ready && (
+          <button type="button" className="gb-btn-primary" disabled={p.downloading} onClick={p.onDownload}>
+            <Download className="mr-1 inline h-4 w-4" />
+            {p.downloading ? "…" : p.modelLoaded ? "Etkinleştir" : "İndir"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

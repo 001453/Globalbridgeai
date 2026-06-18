@@ -1,0 +1,16 @@
+{
+  "name": "globalbridge-qvac-bridge",
+  "version": "1.0.0",
+  "description": "Local QVAC AI bridge for GlobalBridge AI — zero cloud data egress",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@qvac/sdk": "^0.12.2",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  }
+}
