@@ -95,15 +95,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Parley: Translate / Conversation / Live captions */}
         <div className="gb-sidebar-section flex-1">
           <div className="gb-sidebar-label">Mod</div>
-          <NavItem href="/" icon={Languages} label="Çeviri" active={isActive("/")} />
-          <NavItem href="/conversation" icon={MessageSquare} label="Konuşma" active={isActive("/conversation")} />
+          <NavItem href="/" icon={Languages} label="Çeviri" active={isActive("/")} badge="mic" />
+          <NavItem href="/conversation" icon={MessageSquare} label="Konuşma" active={isActive("/conversation")} badge="mic" />
           <NavItem
             href="/live"
             icon={Radio}
             label="Canlı Altyazı"
             active={isActive("/live")}
             live
-            badge="özel mic"
+            badge="mic"
           />
         </div>
 
@@ -119,7 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {theme === "dark" ? "Açık tema" : "Koyu tema"}
           </button>
           <p className="mt-2 px-2 text-[0.65rem] text-[var(--gb-muted)]">
-            TR ↔ EN kurulu. Mikrofon yalnızca Canlı Altyazı&apos;da.
+            Mikrofon: Çeviri, Konuşma ve Canlı Altyazı ekranlarında.
           </p>
         </div>
       </aside>
@@ -136,7 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[var(--gb-muted)]">
               <li>Türkçe ↔ English hazır — doğrudan çevirin.</li>
               <li>Başka dil için o çifti etkinleştirin (isteğe bağlı).</li>
-              <li>Canlı konuşma için <strong>Canlı Altyazı</strong> + özel mikrofon.</li>
+              <li>Çeviri ve konuşmada <strong>mikrofonla dikte</strong>; canlı toplantı için <strong>Canlı Altyazı</strong>.</li>
               <li>Veriler cihazınızda kalır, buluta gitmez.</li>
             </ol>
             <button type="button" className="gb-btn-primary mt-4" onClick={() => setShowGuide(false)}>
